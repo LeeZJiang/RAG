@@ -1,5 +1,6 @@
 import fitz  # PyMuPDF
 from lxml import etree
+import io
 
 class PDFProcessor:
     def __init__(self):
@@ -45,4 +46,18 @@ class PDFProcessor:
     def save_xml(self, xml_content, output_path):
         """保存XML内容到文件"""
         with open(output_path, "w", encoding="utf-8") as f:
-            f.write(xml_content) 
+            f.write(xml_content)
+
+def process_pdf(content: bytes) -> str:
+    """处理PDF文件并提取文本"""
+    try:
+        doc = fitz.open(stream=content, filetype="pdf")
+        texts = []
+        for page in doc:
+            text = page.get_text()
+            if text.strip():
+                texts.append(text)
+        doc.close()
+        return "\n".join(texts)
+    except Exception as e:
+        raise Exception(f"Error processing PDF: {str(e)}") 

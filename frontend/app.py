@@ -31,6 +31,17 @@ except Exception as e:
 # 设置后端API地址
 BACKEND_URL = "http://10.101.105.43:9081"
 
+# 支持的文件类型
+SUPPORTED_FILE_TYPES = {
+    "PDF文件": ["pdf"],
+    "Excel文件": ["xlsx", "xls"],
+    "Word文档": ["docx", "doc"],
+    "Markdown文件": ["md"],
+    "XML文件": ["xml"],
+    "图片文件": ["jpg", "jpeg", "png", "bmp"],
+    "CSV文件": ["csv"]
+}
+
 def check_backend_health():
     """检查后端服务健康状态"""
     try:
@@ -57,8 +68,16 @@ else:
     st.stop()
 
 # 文件上传部分
-st.header("上传PDF文件")
-uploaded_files = st.file_uploader("选择PDF文件", type="pdf", accept_multiple_files=True)
+st.header("上传文件")
+st.markdown("支持的文件类型：")
+for file_type, extensions in SUPPORTED_FILE_TYPES.items():
+    st.markdown(f"- {file_type} ({', '.join(extensions)})")
+
+uploaded_files = st.file_uploader(
+    "选择文件",
+    type=[ext for extensions in SUPPORTED_FILE_TYPES.values() for ext in extensions],
+    accept_multiple_files=True
+)
 
 if uploaded_files:
     if st.button("上传"):
@@ -69,7 +88,7 @@ if uploaded_files:
             files = []
             for file in uploaded_files:
                 logger.info(f"Processing file: {file.name}")
-                files.append(("files", (file.name, file, "application/pdf")))
+                files.append(("files", (file.name, file, f"application/{file.name.split('.')[-1]}")))
             
             status_text.text("正在上传文件...")
             progress_bar.progress(30)
@@ -148,7 +167,7 @@ if st.button("搜索"):
 st.markdown("---")
 st.markdown("### 使用说明")
 st.markdown("""
-1. 上传PDF文件：支持单个或多个PDF文件上传
+1. 上传文件：支持多种文件类型（PDF、Excel、Word、Markdown、XML、图片、CSV）
 2. 搜索知识库：输入关键词，系统会返回最相关的内容
 3. 相似度分数：越高表示越相关
 """) 

@@ -1,5 +1,7 @@
 from lxml import etree
 from typing import List, Dict
+import xml.etree.ElementTree as ET
+import io
 
 class XMLProcessor:
     def __init__(self, chunk_size: int = 1000):
@@ -30,3 +32,21 @@ class XMLProcessor:
         
         traverse(doc)
         return chunks 
+
+def process_xml(content: bytes) -> str:
+    """处理XML文件并提取文本"""
+    try:
+        # 解析XML内容
+        root = ET.fromstring(content)
+        
+        # 提取所有文本内容
+        texts = []
+        for elem in root.iter():
+            if elem.text and elem.text.strip():
+                texts.append(elem.text.strip())
+            if elem.tail and elem.tail.strip():
+                texts.append(elem.tail.strip())
+        
+        return "\n".join(texts)
+    except Exception as e:
+        raise Exception(f"Error processing XML: {str(e)}") 
