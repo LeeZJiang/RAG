@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>企业知识库</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .upload-section, .search-section {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+        }
+        .file-list {
+            margin-top: 10px;
+        }
+        .result-item {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #eee;
+            border-radius: 3px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>企业知识库</h1>
+        
+        <div class="upload-section">
+            <h2>上传PDF文件</h2>
+            <input type="file" id="fileInput" multiple accept=".pdf">
+            <button onclick="uploadFiles()">上传</button>
+            <div id="uploadResults" class="file-list"></div>
+        </div>
+
+        <div class="search-section">
+            <h2>知识检索</h2>
+            <input type="text" id="searchInput" placeholder="输入您的问题...">
+            <button onclick="search()">搜索</button>
+            <div id="searchResults"></div>
+        </div>
+    </div>
+
+    <script>
+        async function uploadFiles() {
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+            
+            if (files.length === 0) {
+                alert('请选择文件');
+                return;
+            }
+
+            const formData = new FormData();
+            for (const file of files) {
+                formData.append('files', file);
+            }
+
+            try {
+                const response = await fetch('/upload/', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                
+                const resultsDiv = document.getElementById('uploadResults');
+                resultsDiv.innerHTML = '';
+                
+                data.results.forEach(result => {
+                    const div = document.createElement('div');
+                    div.className = 'result-item';
+                    if (result.status === 'success') {
+                        div.innerHTML = `${result.filename}: 成功上传，生成 ${result.chunks} 个知识块`;
+                    } else {
+                        div.innerHTML = `${result.filename}: 上传失败 - ${result.error}`;
+                    }
+                    resultsDiv.appendChild(div);
+                });
+            } catch (error) {
+                alert('上传失败: ' + error);
+            }
+        }
+
+        async function search() {
+            const query = document.getElementById('searchInput').value;
+            if (!query) {
+                alert('请输入搜索内容');
+                return;
+            }
+
+            try {
+                const response = await fetch('/search/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ query })
+                });
+                const data = await response.json();
+                
+                const resultsDiv = document.getElementById('searchResults');
+                resultsDiv.innerHTML = '';
+                
+                data.results.forEach(result => {
+                    const div = document.createElement('div');
+                    div.className = 'result-item';
+                    div.innerHTML = `
+                        <h3>${result.metadata.path}</h3>
+                        <p>${result.text}</p>
+                        <small>相似度: ${(1 - result.score).toFixed(2)}</small>
+                    `;
+                    resultsDiv.appendChild(div);
+                });
+            } catch (error) {
+                alert('搜索失败: ' + error);
+            }
+        }
+    </script>
+</body>
+</html> 
